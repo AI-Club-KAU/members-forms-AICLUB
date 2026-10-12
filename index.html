@@ -279,6 +279,25 @@
   .nps button.sel.lo { background: #ff8a7a; } .nps button.sel.mid { background: #ffd166; } .nps button.sel.hi { background: var(--green); }
   .nps-legend { display: flex; justify-content: space-between; direction: ltr; font-size: 12px; color: var(--muted); margin-top: 6px; }
   @media (max-width: 480px) { .nps { grid-template-columns: repeat(6, 1fr); } }
+  /* ─── تسجيل مهمة أو مشاركة ─── */
+  .who { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--green-soft); border: 1px solid rgba(84,214,64,.35); color: #b9f5ad; font-weight: 600; font-size: 14px; }
+  .log-kinds .opt { display: flex !important; flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px 16px; }
+  .log-kinds .opt span { font-size: 12.5px; }
+  .hello { margin: -6px 0 14px; color: #b9f5ad; font-weight: 600; font-size: 14px; }
+  .evpage.err .log-kinds .opt { border-color: rgba(255,107,107,.6); }
+  .file-input { width: 100%; font: inherit; font-size: 14px; color: var(--muted); padding: 10px; border-radius: 12px; border: 1px dashed var(--border-strong); background: var(--surface-2); }
+  .file-input::file-selector-button { font: inherit; margin-left: 10px; padding: 6px 12px; border-radius: 8px; border: 0; background: var(--surface-3); color: var(--text); cursor: pointer; }
+  .field select { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; color-scheme: dark; }
+  .field.err select, .field.err .file-input { border-color: var(--danger); }
+  .mate { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px; border-radius: 12px; border: 1px solid var(--border); background: rgba(21,21,27,.7); }
+  .mate.err { border-color: var(--danger); }
+  .mate input { flex: 1; min-width: 0; font: inherit; font-size: 15px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .mate input::-webkit-calendar-picker-indicator { display: none !important; }
+  .mate-dept { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .mate-rm { font: inherit; font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+  .mate-rm:hover { color: var(--danger); }
+  .members-status { margin-top: 14px; display: grid; gap: 6px; }
+  .members-status div { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); }
 </style>
 </head>
 <body>
@@ -297,7 +316,7 @@
 
   <section class="hero">
     <h1>بوابة <em>نماذج الأعضاء</em></h1>
-    <p>اقتراحات، ملاحظات، تقييم شهري، وطلبات النقل والانسحاب، في مكان واحد.</p>
+    <p>تسجيل المهام والمشاركات، والاقتراحات، والملاحظات، والتقييم الشهري، وطلبات النقل والانسحاب.</p>
   </section>
 
   <div class="tabs" role="tablist">
@@ -368,6 +387,8 @@
 const DEPARTMENTS = ['العلاقات العامة', 'الإعلام والتسويق', 'التقني', 'الهاكاثونات', 'التخطيط والفعاليات', 'الدعم والتطوير'];
 
 const FORMS = [
+  // تسجيل المهام والمشاركات: له خطوات خاصة (buildLog)، والتحقق كله في Code.gs (submitLog)
+  { id: 'log', label: 'تسجيل مهمة أو مشاركة', isLog: true, fields: [] },
   { id: 'idea', label: 'اقتراحات وأفكار', fields: [
     { key: 'dept', type: 'dept', label: 'القسم' },
     { key: 'name', type: 'name', label: 'الاسم' },
@@ -405,6 +426,7 @@ const PRIORITIES = ['منخفضة', 'متوسطة', 'عالية', 'عاجلة'];
 const ID_PREFIX = 'MEM-';
 
 const ICONS = {
+  log: '<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="m9 14 2 2 4-4"/>',
   idea: '<path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/>',
   issue: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
   eval: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -419,6 +441,11 @@ const STATUS_STYLE = {
   'قيد التنفيذ': ['#9fd0ff', 'rgba(80,160,255,.15)'],
   'تم': ['#000', '#54d640'],
   'غير مناسب': ['#ffb3b3', 'rgba(255,107,107,.15)'],
+  'بانتظار المراجعة': ['#ffe08a', 'rgba(255,200,60,.14)'],
+  'معتمد': ['#000', '#54d640'],
+  'مؤكد من الشهادات': ['#000', '#54d640'],
+  'مؤكد تلقائيًا': ['#9fd0ff', 'rgba(80,160,255,.15)'],
+  'مرفوض': ['#ffb3b3', 'rgba(255,107,107,.15)'],
 };
 
 // ─── الربط مع Apps Script (أو معاينة محلية لو فتحت الملف مباشرة) ───
@@ -480,7 +507,10 @@ function api(fn, arg) {
   }
   if (API_URL) {
     const body = fn === 'submitForm' ? Object.assign({ action: 'submit' }, arg)
-      : fn === 'getRequestStatus' ? { action: 'status', id: arg } : { action: 'config' };
+      : fn === 'getRequestStatus' ? { action: 'status', id: arg }
+      : fn === 'lookupMember' ? { action: 'lookup', sid: arg }
+      : fn === 'getLogData' ? { action: 'logdata' }
+      : fn === 'submitLog' ? { action: 'log', data: arg } : { action: 'config' };
     return fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -491,6 +521,17 @@ function api(fn, arg) {
   }
   return new Promise(res => setTimeout(() => {
     if (fn === 'getConfig') return res(MOCK_CONFIG);
+    if (fn === 'lookupMember') return res({ name: 'نورة أحمد الغامدي', dept: 'الإعلام والتسويق' });
+    if (fn === 'getLogData') return res({ members: [{ name: 'نورة أحمد الغامدي', dept: 'الإعلام والتسويق' },
+      { name: 'جود فهد القحطاني', dept: 'التقني' }, { name: 'ريم خالد العتيبي', dept: 'الهاكاثونات' }],
+      events: [{ title: 'Introduction To AI', type: 'ورشة', date: '2026/10/08' }], eventsError: false,
+      reviewDepts: DEPARTMENTS.concat(['قادة المشاريع']), maxAgeDays: 30, maxFileMb: 10 });
+    if (fn === 'submitLog') {
+      const id = ID_PREFIX + 'LG' + Math.floor(Math.random() * 9 + 1);
+      mockDb[id] = { id, kind: 'log', form: 'مهمة', date: new Date().toLocaleString('ar-SA'), dept: arg.forDept || '',
+        title: arg.title || arg.event || arg.eventOther || '', status: 'بانتظار المراجعة', reply: '', updated: '', members: [] };
+      return res({ id, status: 'بانتظار المراجعة' });
+    }
     if (fn === 'submitForm') {
       if (arg.form === 'eval') return res({ id: '' });
       const C = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
@@ -566,7 +607,7 @@ function pickForm(f) {
   state.vals = { priority: 'متوسطة' };
   state.page = 0;
   $$('#form-grid .opt').forEach(o => o.classList.toggle('sel', o.dataset.id === f.id));
-  setTimeout(() => { buildForm(); goStep(2); }, 220);
+  setTimeout(async () => { if (f.isLog) await loadLogData(); buildForm(); goStep(2); }, 220);
 }
 
 // ─── الخطوة 2: الخانات ───
@@ -576,6 +617,7 @@ function buildForm() {
   box.innerHTML = '';
   $('#chip-form').textContent = f.label;
   if (f.isEval) buildEval(box);
+  else if (f.isLog) buildLog(box);
   else f.fields.forEach(fd => box.appendChild(renderField(fd)));
   refreshSegs();
   hideAlert();
@@ -679,13 +721,15 @@ function showPage(i) {
   pages.forEach((p, j) => p.classList.toggle('show', j === i));
   $$('#form-fields .evbar i').forEach((b, j) => b.classList.toggle('on', j <= i));
   const c = $('#form-fields .ev-count');
-  if (c) c.textContent = 'الخطوة ' + (i + 1) + ' من ' + pages.length;
+  const total = state.form && state.form.isLog ? $$('#form-fields .evbar i').length : pages.length; // التسجيل: عدد خطواته يتحدد بعد النوع
+  if (c) c.textContent = 'الخطوة ' + (i + 1) + ' من ' + total;
   updateNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function isLastPage() {
-  return !state.form.isEval || state.page === $$('#form-fields .evpage').length - 1;
+  if (state.form.isLog && !state.vals.kind) return false; // لسه ما اختار النوع
+  return !(state.form.isEval || state.form.isLog) || state.page === $$('#form-fields .evpage').length - 1;
 }
 
 function updateNav() {
@@ -708,7 +752,7 @@ function checkEvalPage(i) {
 }
 
 $('#form-back').addEventListener('click', () => {
-  if (state.form && state.form.isEval && state.page > 0) { hideAlert(); showPage(state.page - 1); }
+  if (state.form && (state.form.isEval || state.form.isLog) && state.page > 0) { hideAlert(); showPage(state.page - 1); }
   else goStep(1);
 });
 
@@ -809,7 +853,8 @@ function hideAlert() { $('#form-alert').classList.remove('show'); }
 $('#req-form').addEventListener('submit', async e => {
   e.preventDefault();
   hideAlert();
-  $$('.field.err, .rq.err, .ev-q.err').forEach(x => x.classList.remove('err'));
+  $$('.field.err, .rq.err, .ev-q.err, .mate.err, .evpage.err').forEach(x => x.classList.remove('err'));
+  if (state.form.isLog) return logSubmit();
   const f = state.form, v = state.vals, data = {};
   let bad = [];
 
@@ -906,6 +951,387 @@ $('#track-this').addEventListener('click', () => {
   track();
 });
 
+// ═══════════════ تسجيل مهمة أو مشاركة (خطوات: الرقم الجامعي ← النوع ← البيانات ← الزملاء) ═══════════════
+const LOG_KINDS = [
+  { id: 'task_solo', label: 'مهمة فردية', hint: 'تنظيم، تقديم، تطوع، تصميم…' },
+  { id: 'task_team', label: 'مهمة جماعية', hint: 'مهمة مع زملاء' },
+  { id: 'internal', label: 'مشاركة داخلية', hint: 'حضور فعالية للنادي' },
+  { id: 'external', label: 'مشاركة خارجية', hint: 'فعالية برا النادي' },
+];
+const TASK_SIZES = ['صغيرة', 'متوسطة', 'كبيرة'];
+const EXTERNAL_ACTIVITIES = ['هاكاثون أو مسابقة', 'معرض أو فعالية جامعية', 'تطوع باسم النادي', 'أخرى'];
+const EXTERNAL_RESULTS = ['مشاركة', 'تأهل', 'مركز أول', 'مركز ثاني', 'مركز ثالث', 'أخرى'];
+const EVENT_NONE = '__none', EVENT_OTHER = '__other';
+const LOG_DONE = ['معتمد', 'مؤكد من الشهادات', 'مؤكد تلقائيًا'];
+
+let LOGDATA = null;
+let logDataPromise = null;
+function loadLogData() {
+  if (!logDataPromise) {
+    logDataPromise = api('getLogData').then(d => { LOGDATA = d; }, () => {
+      logDataPromise = null;
+      LOGDATA = { members: [], events: [], eventsError: true, reviewDepts: DEPARTMENTS.concat(['قادة المشاريع']), maxAgeDays: 30, maxFileMb: 10 };
+    });
+  }
+  return logDataPromise;
+}
+
+function dayStr(offset) {
+  const d = new Date(Date.now() + (offset || 0) * 86400000);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function logField(key, label, optional) {
+  const w = el('div', 'field');
+  w.dataset.f = key;
+  const l = el('label', null, label);
+  l.htmlFor = 'l-' + key;
+  if (optional) { l.appendChild(document.createTextNode(' ')); l.appendChild(el('span', 'opt-l', '(اختياري)')); }
+  w.appendChild(l);
+  w.addEventListener('input', () => w.classList.remove('err'));
+  w.addEventListener('change', () => w.classList.remove('err'));
+  return w;
+}
+function logInput(key, label, opts) {
+  opts = opts || {};
+  const w = logField(key, label, opts.optional);
+  const i = el(opts.area ? 'textarea' : 'input');
+  i.id = 'l-' + key;
+  i.maxLength = opts.max || 150;
+  if (opts.type) i.type = opts.type;
+  if (opts.type === 'url') i.dir = 'ltr';
+  if (opts.type === 'date') { i.max = dayStr(0); i.min = dayStr(-(LOGDATA.maxAgeDays || 30)); }
+  if (opts.placeholder) i.placeholder = opts.placeholder;
+  w.appendChild(i);
+  return w;
+}
+// اختيار من أزرار، ولو فيه "أخرى" تطلع خانة كتابة
+function logSeg(key, label, options) {
+  const w = logField(key, label);
+  w.appendChild(segField(key, options));
+  if (options.includes('أخرى')) {
+    const o = el('input', 'other-input hidden');
+    o.id = 'l-' + key + 'Other';
+    o.maxLength = 100;
+    o.placeholder = 'اكتب ' + label;
+    o.style.marginTop = '8px';
+    w.appendChild(o);
+  }
+  return w;
+}
+// قائمة الفعاليات: من القائمة، أو "غير موجودة" ويكتبها، أو (للمهام) بدون
+function logEventField(optional) {
+  const w = logField('event', optional ? 'مرتبطة بفعالية؟' : 'الفعالية', optional);
+  const s = el('select');
+  s.id = 'l-event';
+  const add = (v, t) => { const o = el('option', null, t); o.value = v; s.appendChild(o); };
+  add(optional ? EVENT_NONE : '', optional ? 'لا' : 'اختر الفعالية');
+  LOGDATA.events.forEach(ev => add(ev.title, ev.title + (ev.date ? ' — ' + ev.date : '')));
+  add(EVENT_OTHER, 'فعالية غير موجودة في القائمة ✏️');
+  w.appendChild(s);
+  const other = el('input', 'other-input hidden');
+  other.id = 'l-eventOther';
+  other.maxLength = 200;
+  other.placeholder = 'اسم الفعالية';
+  other.style.marginTop = '8px';
+  w.appendChild(other);
+  s.addEventListener('change', () => {
+    other.classList.toggle('hidden', s.value !== EVENT_OTHER);
+    if (!optional) $('#log-date-wrap').classList.toggle('hidden', s.value !== EVENT_OTHER); // تاريخ الفعالية من القائمة لحاله
+  });
+  if (LOGDATA.eventsError) w.appendChild(el('div', 'sub', 'تعذّر جلب قائمة الفعاليات، تقدر تكتب اسمها بنفسك.'));
+  return w;
+}
+function logOutputField(label) {
+  const w = logField('output', label, true);
+  const f = el('input');
+  f.type = 'file';
+  f.id = 'l-file';
+  f.className = 'file-input';
+  w.appendChild(f);
+  const info = el('div', 'sub', 'ملف حتى ' + (LOGDATA.maxFileMb || 10) + ' ميغا، أو رابط (درايف، فيقما، قيت هب…)');
+  info.style.margin = '6px 0';
+  w.appendChild(info);
+  const l = el('input');
+  l.type = 'url'; l.dir = 'ltr'; l.id = 'l-link'; l.maxLength = 500; l.placeholder = 'https://';
+  w.appendChild(l);
+  return w;
+}
+
+function buildLog(box) {
+  const head = el('div', 'ev-head');
+  head.appendChild(el('div', 'month-banner', 'يُسجَّل بعد انتهاء العمل أو المشاركة'));
+  head.appendChild(el('div', 'ev-count'));
+  box.appendChild(head);
+  box.appendChild(el('div', 'evbar'));
+
+  // 1) الرقم الجامعي
+  const p1 = el('div', 'evpage');
+  p1.dataset.page = 'sid';
+  p1.appendChild(el('h3', null, 'الرقم الجامعي'));
+  const w = logField('sid', 'الرقم الجامعي');
+  const i = el('input');
+  i.id = 'l-sid'; i.inputMode = 'numeric'; i.maxLength = 10; i.dir = 'ltr'; i.autocomplete = 'off'; i.placeholder = '2210345';
+  w.appendChild(i);
+  const who = el('div', 'who hidden');
+  who.id = 'log-who';
+  w.appendChild(who);
+  i.addEventListener('input', () => { state.vals.me = null; who.classList.add('hidden'); });
+  p1.appendChild(w);
+  box.appendChild(p1);
+
+  // 2) النوع
+  const p2 = el('div', 'evpage');
+  p2.dataset.page = 'kind';
+  p2.appendChild(el('h3', null, 'وش تبغى تسجّل؟'));
+  const hello = el('div', 'hello');
+  hello.id = 'log-hello';
+  p2.appendChild(hello);
+  const grid = el('div', 'grid log-kinds');
+  LOG_KINDS.forEach(k => {
+    const b = el('button', 'opt');
+    b.type = 'button';
+    b.dataset.id = k.id;
+    b.appendChild(el('b', null, k.label));
+    b.appendChild(el('span', null, k.hint));
+    b.addEventListener('click', () => {
+      state.vals.kind = k.id;
+      $$('.log-kinds .opt').forEach(o => o.classList.toggle('sel', o === b));
+      p2.classList.remove('err');
+      buildLogDetails();
+      setTimeout(() => { hideAlert(); showPage(2); }, 200);
+    });
+    grid.appendChild(b);
+  });
+  p2.appendChild(grid);
+  box.appendChild(p2);
+  syncLogBar();
+  showPage(0);
+}
+
+// يبني صفحة البيانات (وصفحة الزملاء للمهمة الجماعية) حسب النوع
+function buildLogDetails() {
+  $$('#form-fields .evpage[data-page="details"], #form-fields .evpage[data-page="team"]').forEach(p => p.remove());
+  ['size', 'forDept', 'activity', 'result'].forEach(k => delete state.vals[k]);
+  const k = state.vals.kind, box = $('#form-fields'), me = state.vals.me;
+  const p = el('div', 'evpage');
+  p.dataset.page = 'details';
+  p.appendChild(el('h3', null, LOG_KINDS.find(x => x.id === k).label));
+  if (k === 'task_solo' || k === 'task_team') {
+    p.appendChild(logInput('title', 'عنوان المهمة'));
+    p.appendChild(logInput('details', 'التفاصيل', { area: true, max: 3000, placeholder: 'وش سويت بالضبط؟' }));
+    p.appendChild(logInput('date', 'التاريخ', { type: 'date' }));
+    p.appendChild(logSeg('size', 'حجم المهمة', TASK_SIZES));
+    p.appendChild(logSeg('forDept', 'لصالح أي قسم؟', LOGDATA.reviewDepts));
+    p.appendChild(logEventField(true));
+    p.appendChild(logOutputField('المخرج'));
+    if (me && LOGDATA.reviewDepts.includes(me.dept)) state.vals.forDept = me.dept; // الافتراضي قسمه
+  } else if (k === 'internal') {
+    p.appendChild(logEventField(false));
+    const dw = logInput('date', 'تاريخ الفعالية', { type: 'date' });
+    dw.id = 'log-date-wrap';
+    dw.classList.add('hidden');
+    p.appendChild(dw);
+    p.appendChild(logInput('details', 'ملاحظات', { area: true, max: 3000, optional: true }));
+  } else {
+    p.appendChild(logSeg('activity', 'نوع النشاط', EXTERNAL_ACTIVITIES));
+    p.appendChild(logInput('title', 'اسم الفعالية'));
+    p.appendChild(logInput('organizer', 'الجهة المنظمة'));
+    p.appendChild(logInput('date', 'التاريخ', { type: 'date' }));
+    p.appendChild(logSeg('result', 'النتيجة', EXTERNAL_RESULTS));
+    p.appendChild(logInput('details', 'ملاحظات', { area: true, max: 3000, optional: true }));
+    p.appendChild(logOutputField('إثبات'));
+  }
+  box.appendChild(p);
+
+  if (k === 'task_team') {
+    const t = el('div', 'evpage');
+    t.dataset.page = 'team';
+    t.appendChild(el('h3', null, 'الزملاء'));
+    t.appendChild(el('p', 'sub', 'اختر الأعضاء اللي اشتغلوا معك. كل واحد ينراجع لحاله.'));
+    const list = el('div');
+    list.id = 'team-list';
+    t.appendChild(list);
+    const dl = el('datalist');
+    dl.id = 'dl-members';
+    LOGDATA.members.filter(m => !me || m.name !== me.name).forEach(m => { const o = el('option'); o.value = m.name; o.label = m.dept; dl.appendChild(o); });
+    t.appendChild(dl);
+    const add = el('button', 'btn btn-ghost', '+ إضافة زميل');
+    add.type = 'button';
+    add.style.width = '100%';
+    add.addEventListener('click', () => addMate().focus());
+    t.appendChild(add);
+    box.appendChild(t);
+    addMate();
+  }
+  // "أخرى" يطلّع خانة الكتابة
+  $$('#form-fields .evpage[data-page="details"] .seg').forEach(seg => seg.addEventListener('click', () => {
+    const o = $('#l-' + seg.dataset.key + 'Other');
+    if (o) o.classList.toggle('hidden', state.vals[seg.dataset.key] !== 'أخرى');
+  }));
+  refreshSegs();
+  syncLogBar();
+}
+
+function addMate() {
+  const row = el('div', 'mate');
+  const i = el('input');
+  i.setAttribute('list', 'dl-members');
+  i.autocomplete = 'off';
+  i.placeholder = 'اسم الزميل';
+  const info = el('span', 'mate-dept');
+  i.addEventListener('input', () => {
+    row.classList.remove('err');
+    const m = LOGDATA.members.find(x => x.name === i.value.trim());
+    info.textContent = m ? m.dept : '';
+  });
+  const rm = el('button', 'mate-rm', 'حذف');
+  rm.type = 'button';
+  rm.addEventListener('click', () => { row.remove(); if (!$$('#team-list .mate').length) addMate(); });
+  row.append(i, info, rm);
+  $('#team-list').appendChild(row);
+  return i;
+}
+
+function syncLogBar() {
+  const bar = $('#form-fields .evbar');
+  const n = $$('#form-fields .evpage').length + (state.vals.kind ? 0 : 1); // قبل اختيار النوع نفترض صفحة بيانات
+  bar.innerHTML = '';
+  for (let i = 0; i < n; i++) bar.appendChild(el('i'));
+}
+
+async function checkLogPage(i) {
+  const page = $$('#form-fields .evpage')[i];
+  const name = page.dataset.page, bad = [];
+  const val = id => { const x = $('#l-' + id); return x ? x.value.trim() : ''; };
+  const need = (key, ok) => { if (!ok) bad.push($('#form-fields .field[data-f="' + key + '"]')); };
+  if (name === 'sid') {
+    if (state.vals.me) return bad;
+    const sid = val('sid');
+    if (!/^[0-9٠-٩]{7}$/.test(sid)) { need('sid', false); showAlert('الرقم الجامعي لازم يكون 7 أرقام.'); return bad; }
+    try {
+      const me = await api('lookupMember', sid);
+      state.vals.me = me;
+      const who = $('#log-who');
+      who.textContent = 'أهلًا ' + me.name + ' · ' + me.dept;
+      who.classList.remove('hidden');
+      $('#log-hello').textContent = 'أهلًا ' + me.name + ' · ' + me.dept;
+    } catch (err) {
+      need('sid', false);
+      showAlert((err && err.message) || 'تعذّر التحقق من الرقم الجامعي.');
+    }
+    return bad;
+  }
+  if (name === 'kind') { if (!state.vals.kind) bad.push(page); return bad; }
+  if (name === 'details') {
+    const k = state.vals.kind;
+    if (k === 'task_solo' || k === 'task_team') {
+      need('title', val('title')); need('details', val('details')); need('date', val('date'));
+      need('size', state.vals.size); need('forDept', state.vals.forDept);
+      if ($('#l-event').value === EVENT_OTHER) need('event', val('eventOther'));
+    } else if (k === 'internal') {
+      const ev = $('#l-event').value;
+      need('event', ev && (ev !== EVENT_OTHER || val('eventOther')));
+      if (ev === EVENT_OTHER) need('date', val('date'));
+    } else {
+      need('activity', state.vals.activity && (state.vals.activity !== 'أخرى' || val('activityOther')));
+      need('title', val('title')); need('organizer', val('organizer')); need('date', val('date'));
+      need('result', state.vals.result && (state.vals.result !== 'أخرى' || val('resultOther')));
+    }
+    const d = val('date');
+    if (d && (d > dayStr(0) || d < dayStr(-(LOGDATA.maxAgeDays || 30)))) need('date', false);
+    const f = $('#l-file');
+    if (f && f.files[0] && f.files[0].size > (LOGDATA.maxFileMb || 10) * 1024 * 1024) {
+      need('output', false);
+      showAlert('حجم الملف أكبر من ' + (LOGDATA.maxFileMb || 10) + ' ميغا. ارفعه على درايف وحط الرابط.');
+      return bad;
+    }
+    const link = val('link');
+    if (link && !/^(https?:\/\/)?[^\s.]+\.\S+$/i.test(link)) need('output', false);
+    if (bad.length && d && (d > dayStr(0) || d < dayStr(-(LOGDATA.maxAgeDays || 30)))) {
+      showAlert('التاريخ لازم يكون خلال آخر ' + (LOGDATA.maxAgeDays || 30) + ' يوم، وما يكون بالمستقبل.');
+    }
+    return bad;
+  }
+  if (name === 'team') {
+    const rows = $$('#team-list .mate'), seen = new Set();
+    let any = false;
+    rows.forEach(r => {
+      const n = r.querySelector('input').value.trim();
+      if (!n) return;
+      any = true;
+      if (!LOGDATA.members.some(m => m.name === n) || seen.has(n)) bad.push(r);
+      seen.add(n);
+    });
+    if (!any) bad.push(rows[0]);
+    return bad;
+  }
+  return bad;
+}
+
+function readFile(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res({ name: f.name, type: f.type, b64: String(r.result).split(',')[1] || '' });
+    r.onerror = () => rej(new Error('تعذّر قراءة الملف.'));
+    r.readAsDataURL(f);
+  });
+}
+
+async function logSubmit() {
+  const btn = $('#submit-btn');
+  const bad = await checkLogPage(state.page);
+  if (bad.length) {
+    bad.forEach(x => x && x.classList.add('err'));
+    if (!$('#form-alert').classList.contains('show')) showAlert('يرجى تعبئة الحقول المطلوبة.');
+    if (bad[0]) bad[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  if (!isLastPage()) { hideAlert(); showPage(state.page + 1); return; }
+
+  const val = id => { const x = $('#l-' + id); return x ? x.value.trim() : ''; };
+  const k = state.vals.kind;
+  const data = { sid: val('sid'), kind: k, details: val('details'), date: val('date') };
+  if (k === 'task_solo' || k === 'task_team') {
+    Object.assign(data, { title: val('title'), size: state.vals.size, forDept: state.vals.forDept });
+  } else if (k === 'external') {
+    Object.assign(data, { title: val('title'), organizer: val('organizer'), activity: state.vals.activity,
+      activityOther: val('activityOther'), result: state.vals.result, resultOther: val('resultOther') });
+  }
+  const ev = $('#l-event');
+  if (ev) {
+    if (ev.value === EVENT_OTHER) data.eventOther = val('eventOther');
+    else if (ev.value && ev.value !== EVENT_NONE) data.event = ev.value;
+  }
+  let link = val('link');
+  if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+  data.link = link;
+  if (k === 'task_team') data.team = $$('#team-list .mate input').map(i => i.value.trim()).filter(Boolean);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> جاري الإرسال…';
+  try {
+    const f = $('#l-file');
+    if (f && f.files[0]) data.file = await readFile(f.files[0]);
+    const res = await api('submitLog', data);
+    const recent = store.get('recent', []).filter(x => x !== res.id);
+    recent.unshift(res.id);
+    store.set('recent', recent.slice(0, 6));
+    $('#ticket-id').textContent = res.id;
+    $('#ticket').classList.remove('hidden');
+    $('#track-this').classList.remove('hidden');
+    $('#done-title').textContent = 'تم التسجيل';
+    $('#done-sub').textContent = res.status === 'مؤكد من الشهادات'
+      ? 'تأكدت مشاركتك من سجل الحضور ✅ رقم التسجيل:' : 'بانتظار المراجعة. رقم التسجيل للمتابعة:';
+    goStep(3);
+  } catch (err) {
+    showAlert((err && err.message) || 'صار خطأ أثناء الإرسال، حاول مرة ثانية.');
+  } finally {
+    btn.disabled = false;
+    updateNav();
+  }
+}
+
 // ─── التبويبات ───
 function switchView(v) {
   $$('.tab').forEach(t => t.classList.toggle('active', t.dataset.view === v));
@@ -986,9 +1412,16 @@ function renderResult(r) {
   box.appendChild(head);
 
   const tl = el('div', 'timeline');
-  const rejected = r.status === 'غير مناسب';
-  const idx = rejected ? 1 : Math.max(0, STATUS_FLOW.indexOf(r.status));
-  const flow = rejected ? ['جديد', 'غير مناسب'] : STATUS_FLOW;
+  const isLog = r.kind === 'log';
+  const rejected = r.status === 'غير مناسب' || r.status === 'مرفوض';
+  let idx, flow;
+  if (isLog) {
+    flow = rejected ? ['بانتظار المراجعة', 'مرفوض'] : ['بانتظار المراجعة', 'تم التأكيد'];
+    idx = rejected || LOG_DONE.includes(r.status) ? 1 : 0;
+  } else {
+    idx = rejected ? 1 : Math.max(0, STATUS_FLOW.indexOf(r.status));
+    flow = rejected ? ['جديد', 'غير مناسب'] : STATUS_FLOW;
+  }
   flow.forEach((s, i) => {
     const step = el('div', 'tl');
     if (i <= idx) step.classList.add('on');
@@ -999,6 +1432,19 @@ function renderResult(r) {
   });
   box.appendChild(tl);
 
+  if (isLog && r.members && r.members.length) {
+    const ms = el('div', 'members-status');
+    r.members.forEach(m => {
+      const row = el('div');
+      row.appendChild(el('span', null, m.name));
+      const st = STATUS_STYLE[m.status] || STATUS_STYLE['بانتظار المراجعة'];
+      const b = el('span', 'badge', m.status);
+      b.style.color = st[0]; b.style.background = st[1];
+      row.appendChild(b);
+      ms.appendChild(row);
+    });
+    box.appendChild(ms);
+  }
   if (r.reply) {
     const rep = el('div', 'reply');
     rep.appendChild(el('b', null, rejected ? 'السبب' : 'رد فريق الدعم والتطوير'));
