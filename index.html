@@ -145,6 +145,21 @@
   .field textarea { min-height: 130px; resize: vertical; }
   .field input:focus, .field textarea:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
   .field input[type=date] { color-scheme: dark; }
+  /* التاريخ: نفس عرض الحقول، أيقونة، وصيغة داخلية لما يكون فاضي (الجوال ما يعرض شي) */
+  .date-box { position: relative; }
+  .field .date-box input[type=date] {
+    -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%;
+    height: 48px; text-align: right; cursor: pointer; position: relative; padding-left: 44px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9aa8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cpath d='M16 2v4M8 2v4M3 10h18'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: left 14px center; background-size: 18px;
+  }
+  .date-box input::-webkit-date-and-time-value { text-align: right; margin: 0; }
+  .date-box input::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: auto; height: auto; opacity: 0; cursor: pointer; }
+  .date-box.blank input::-webkit-datetime-edit { color: transparent; }
+  .date-box.blank input:focus::-webkit-datetime-edit { color: var(--text); }
+  .date-ph { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #6b6b78; font-size: 15px; pointer-events: none; }
+  .date-box:not(.blank) .date-ph, .date-box input:focus + .date-ph { display: none; }
+  @supports (-moz-appearance: none) { .date-ph { display: none; } }
   .field.err input, .field.err textarea { border-color: var(--danger); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
@@ -1002,6 +1017,16 @@ function logInput(key, label, opts) {
   if (opts.type === 'url') i.dir = 'ltr';
   if (opts.type === 'date') { i.max = dayStr(0); i.min = dayStr(-(LOGDATA.maxAgeDays || 30)); }
   if (opts.placeholder) i.placeholder = opts.placeholder;
+  if (opts.type === 'date') {
+    const box = el('div', 'date-box blank');
+    const sync = () => box.classList.toggle('blank', !i.value);
+    i.addEventListener('input', sync);
+    i.addEventListener('change', sync);
+    box.appendChild(i);
+    box.appendChild(el('span', 'date-ph', 'اختر التاريخ'));
+    w.appendChild(box);
+    return w;
+  }
   w.appendChild(i);
   return w;
 }
