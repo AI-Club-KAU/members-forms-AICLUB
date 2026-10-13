@@ -132,6 +132,14 @@
   }
   .chip:hover { border-color: var(--border-strong); }
   .chip i { font-style: normal; color: var(--muted); font-size: 12px; }
+  .chips { align-items: center; }
+  /* سهم رجوع خفيف فوق النموذج (نفس زر رجوع اللي تحت) */
+  .back-top {
+    display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; cursor: pointer;
+    color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 999px; transition: .15s;
+  }
+  .back-top svg { width: 18px; height: 18px; }
+  .back-top:hover { color: var(--text); border-color: var(--border); }
 
   .field { margin-bottom: 16px; }
   .field label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 7px; }
@@ -143,6 +151,7 @@
   }
   .field input::placeholder, .field textarea::placeholder { color: #6b6b78; }
   .field textarea { min-height: 130px; resize: vertical; }
+  @media (max-width: 560px) { input, textarea, select, .date-ph { font-size: 16px !important; } }
   .field input:focus, .field textarea:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
   .field input[type=date] { color-scheme: dark; }
   /* التاريخ: نفس عرض الحقول، أيقونة، وصيغة داخلية لما يكون فاضي (الجوال ما يعرض شي) */
@@ -166,8 +175,8 @@
 
   .seg { display: flex; gap: 6px; flex-wrap: wrap; }
   .seg button {
-    flex: 1; min-width: 70px; font: inherit; font-size: 14px; cursor: pointer; color: var(--muted);
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; transition: .15s;
+    flex: 1 1 auto; min-width: 70px; font: inherit; font-size: 14px; cursor: pointer; color: var(--muted); white-space: nowrap;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; transition: .15s;
   }
   .seg button.sel { color: #000; background: var(--green); border-color: var(--green); font-weight: 600; }
   .seg button[data-v="عاجلة"].sel { background: #ff8a5c; border-color: #ff8a5c; }
@@ -353,6 +362,7 @@
 
     <section class="step" data-step="2">
       <div class="chips">
+        <button type="button" class="back-top" id="form-back-top" aria-label="رجوع" title="رجوع"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <button class="chip" data-back="1"><i>النموذج:</i> <span id="chip-form"></span></button>
       </div>
       <form id="req-form" novalidate>
@@ -766,6 +776,17 @@ function checkEvalPage(i) {
   return bad;
 }
 
+$('#form-back-top').addEventListener('click', () => $('#form-back').click());
+
+// بعد ما ينقفل كيبورد الجوال: نرجّع الصفحة لمكانها لو ظلت مزحوحة لفوق مع فراغ تحت
+function fixKeyboardScroll() {
+  const a = document.activeElement;
+  if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return; // انتقل لحقل ثاني، الكيبورد لسه مفتوح
+  const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+  window.scrollTo(0, Math.min(window.scrollY, max));
+}
+document.addEventListener('focusout', () => setTimeout(fixKeyboardScroll, 150));
+if (window.visualViewport) window.visualViewport.addEventListener('resize', () => setTimeout(fixKeyboardScroll, 50));
 $('#form-back').addEventListener('click', () => {
   if (state.form && (state.form.isEval || state.form.isLog) && state.page > 0) { hideAlert(); showPage(state.page - 1); }
   else goStep(1);
