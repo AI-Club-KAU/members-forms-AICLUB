@@ -632,7 +632,7 @@ function pickForm(f) {
   state.vals = { priority: 'متوسطة' };
   state.page = 0;
   $$('#form-grid .opt').forEach(o => o.classList.toggle('sel', o.dataset.id === f.id));
-  setTimeout(async () => { if (f.isLog) await loadLogData(); buildForm(); goStep(2); }, 220);
+  setTimeout(() => { if (f.isLog) loadLogData(); buildForm(); goStep(2); }, 220); // صفحة الرقم الجامعي ما تحتاج البيانات، فتفتح على طول
 }
 
 // ─── الخطوة 2: الخانات ───
@@ -1011,6 +1011,7 @@ function loadLogData() {
   }
   return logDataPromise;
 }
+loadLogData(); // نجيبها من أول ما يفتح الموقع، فلما يضغط العضو تكون جاهزة
 
 function dayStr(offset) {
   const d = new Date(Date.now() + (offset || 0) * 86400000);
@@ -1256,7 +1257,7 @@ async function checkLogPage(i) {
     const sid = val('sid');
     if (!/^[0-9٠-٩]{7}$/.test(sid)) { need('sid', false); showAlert('الرقم الجامعي لازم يكون 7 أرقام.'); return bad; }
     try {
-      const me = await api('lookupMember', sid);
+      const [me] = await Promise.all([api('lookupMember', sid), loadLogData()]); // الصفحات الجاية تحتاج البيانات
       state.vals.me = me;
       const who = $('#log-who');
       who.textContent = 'أهلًا ' + me.name + ' · ' + me.dept;
