@@ -35,18 +35,16 @@
     line-height: 1.6;
   }
   /* خلفية: توهج أخضر/بنفسجي مثل خلفيات الهوية */
-  .glow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-  .glow::before, .glow::after {
-    content: ""; position: absolute; width: 60vmax; height: 60vmax; border-radius: 50%;
-    filter: blur(90px); opacity: .35;
-  }
-  .glow::before { background: var(--purple); top: -30vmax; right: -20vmax; }
-  .glow::after  { background: var(--green);  bottom: -38vmax; left: -25vmax; opacity: .18; }
+  /* بتدرج بدل filter: blur — نفس الشكل وأخف بكثير على التمرير */
+  .glow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; transform: translateZ(0); }
+  .glow::before, .glow::after { content: ""; position: absolute; width: 90vmax; height: 90vmax; border-radius: 50%; }
+  .glow::before { background: radial-gradient(closest-side, rgba(126,54,227,.35), rgba(126,54,227,0)); top: -45vmax; right: -35vmax; }
+  .glow::after  { background: radial-gradient(closest-side, rgba(84,214,64,.18), rgba(84,214,64,0)); bottom: -53vmax; left: -40vmax; }
   .pixels { position: fixed; pointer-events: none; z-index: 0; display: grid; grid-template-columns: repeat(2, 22px); }
   .pixels i { width: 22px; height: 22px; display: block; }
   .px-a { top: 120px; left: 6%; }
   .px-b { bottom: 70px; right: 7%; }
-  @media (max-width: 700px) { .pixels { display: none; } }
+  @media (max-width: 1000px) { .pixels { display: none; } } /* أقل من كذا تطلع فوق الكلام */
 
   .wrap { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 16px 40px; }
 
@@ -73,7 +71,7 @@
   .tab.active { background: var(--text); color: #000; }
 
   .card {
-    background: rgba(12,12,16,.82); backdrop-filter: blur(14px);
+    background: rgba(12,12,16,.9);
     border: 1px solid var(--border); border-radius: 24px; padding: 28px;
     min-height: 480px; /* نفس الحجم في التبويبين */
   }
@@ -133,6 +131,9 @@
   .chip:hover { border-color: var(--border-strong); }
   .chip i { font-style: normal; color: var(--muted); font-size: 12px; }
   .chips { align-items: center; }
+  #view-new .chips { flex-wrap: nowrap; }
+  #view-new .chips .chip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+  .back-top { flex: none; }
   /* سهم رجوع خفيف فوق النموذج (نفس زر رجوع اللي تحت) */
   .back-top {
     display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; cursor: pointer;
@@ -169,6 +170,10 @@
   .date-ph { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #6b6b78; font-size: 15px; pointer-events: none; }
   .date-box:not(.blank) .date-ph, .date-box input:focus + .date-ph { display: none; }
   @supports (-moz-appearance: none) { .date-ph { display: none; } }
+  @media (hover: hover) and (pointer: fine) {
+    .date-ph { display: none !important; }
+    .date-box.blank input::-webkit-datetime-edit { color: #6b6b78; }
+  }
   .field.err input, .field.err textarea { border-color: var(--danger); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
@@ -311,6 +316,7 @@
   .evpage.err .log-kinds .opt { border-color: rgba(255,107,107,.6); }
   .file-input { width: 100%; font: inherit; font-size: 14px; color: var(--muted); padding: 10px; border-radius: 12px; border: 1px dashed var(--border-strong); background: var(--surface-2); }
   .file-input::file-selector-button { font: inherit; margin-left: 10px; padding: 6px 12px; border-radius: 8px; border: 0; background: var(--surface-3); color: var(--text); cursor: pointer; }
+  .field select { text-overflow: ellipsis; }
   .field select { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; color-scheme: dark; }
   .field.err select, .field.err .file-input { border-color: var(--danger); }
   .mate { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px; border-radius: 12px; border: 1px solid var(--border); background: rgba(21,21,27,.7); }
@@ -321,6 +327,22 @@
   .mate-rm { font: inherit; font-size: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
   .mate-rm:hover { color: var(--danger); }
   .members-status { margin-top: 14px; display: grid; gap: 6px; }
+  /* الدخول بالرقم الجامعي */
+  .login-box { max-width: 380px; margin: 26px auto 0; text-align: center; }
+  .login-box .field input { direction: ltr; text-align: center; font-size: 18px; letter-spacing: 2px; }
+  .login-box .btn { width: 100%; justify-content: center; }
+  .whoami { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 20px; padding: 10px 16px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); font-size: 14px; }
+  .whoami { flex-wrap: nowrap; }
+  .whoami > span { flex: 1; min-width: 0; line-height: 1.5; }
+  .whoami .linkbtn { flex: none; white-space: nowrap; }
+  .whoami b { color: #b9f5ad; font-weight: 600; }
+  .linkbtn { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+  .linkbtn:hover { color: var(--text); }
+  .check-line { display: flex; align-items: center; gap: 8px; margin: -4px 0 16px; font-size: 14px; color: var(--muted); cursor: pointer; width: fit-content; }
+  .check-line input { width: 18px; height: 18px; margin: 0; accent-color: var(--green); cursor: pointer; }
+  .row2 > .field { min-width: 0; }
+  .note { color: var(--muted); font-size: 13px; margin: -6px 0 16px; }
   .members-status div { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); }
 </style>
 </head>
@@ -350,12 +372,25 @@
 
   <!-- ───── نموذج جديد ───── -->
   <main class="card" id="view-new">
+    <div class="whoami hidden" id="whoami">
+      <span>أهلًا <b id="who-name"></b> · <span id="who-dept"></span></span>
+      <button type="button" class="linkbtn" id="logout">مو أنت؟</button>
+    </div>
     <div class="stepper" id="stepper">
       <div data-s="1"><div class="bar"></div><small>نوع النموذج</small></div>
       <div data-s="2"><div class="bar"></div><small>التفاصيل</small></div>
     </div>
 
-    <section class="step show" data-step="1">
+    <section class="step show" data-step="0">
+      <form class="login-box" id="login-form" novalidate>
+        <h2>الرقم الجامعي</h2>
+        <div class="field"><input id="login-sid" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="2210345" aria-label="الرقم الجامعي"></div>
+        <div class="alert" id="login-alert"></div>
+        <button class="btn btn-primary" id="login-btn" type="submit">دخول</button>
+      </form>
+    </section>
+
+    <section class="step" data-step="1">
       <h2>نوع النموذج</h2>
       <div class="grid" id="form-grid"></div>
     </section>
@@ -414,34 +449,24 @@ const DEPARTMENTS = ['العلاقات العامة', 'الإعلام والتس
 const FORMS = [
   // تسجيل المهام والمشاركات: له خطوات خاصة (buildLog)، والتحقق كله في Code.gs (submitLog)
   { id: 'log', label: 'تسجيل مهمة أو مشاركة', isLog: true, fields: [] },
+  // الاسم والقسم والإيميل تنضاف تلقائيًا من الرقم الجامعي (Code.gs)
   { id: 'idea', label: 'اقتراحات وأفكار', fields: [
-    { key: 'dept', type: 'dept', label: 'القسم' },
-    { key: 'name', type: 'name', label: 'الاسم' },
     { key: 'title', type: 'text', label: 'عنوان الاقتراح', max: 150 },
     { key: 'details', type: 'textarea', label: 'الوصف', max: 3000 },
     { key: 'link', type: 'link', label: 'رابط مرفق', optional: true },
   ] },
-  { id: 'issue', label: 'ملاحظات ومشاكل', anon: true, fields: [
-    { key: 'dept', type: 'dept', label: 'القسم' },
-    { key: 'name', type: 'name', label: 'الاسم' },
+  { id: 'issue', label: 'ملاحظات ومشاكل', note: 'ما يوصل اسمك للقادة.', fields: [
     { key: 'title', type: 'text', label: 'الموضوع', max: 150 },
     { key: 'details', type: 'textarea', label: 'التفاصيل', max: 3000 },
     { key: 'priority', type: 'priority', label: 'الأولوية' },
   ] },
   // أسئلة التقييم نفسها في Code.gs (EVAL_SECTIONS) والواجهة تاخذها من هناك
-  { id: 'eval', label: 'التقييم الشهري', anon: true, isEval: true, fields: [
-    { key: 'dept', type: 'dept', label: 'القسم' },
-    { key: 'name', type: 'name', label: 'الاسم' },
-  ] },
+  { id: 'eval', label: 'التقييم الشهري', isEval: true, note: 'ما يوصل اسمك للقادة.', fields: [] },
   { id: 'transfer', label: 'طلب نقل', fields: [
-    { key: 'dept', type: 'dept', label: 'القسم الحالي' },
-    { key: 'name', type: 'name', label: 'الاسم' },
     { key: 'toDept', type: 'dept', label: 'القسم المطلوب' },
     { key: 'reason', type: 'textarea', label: 'سبب النقل', max: 3000 },
   ] },
   { id: 'withdraw', label: 'طلب انسحاب', fields: [
-    { key: 'dept', type: 'dept', label: 'القسم' },
-    { key: 'name', type: 'name', label: 'الاسم' },
     { key: 'reason', type: 'textarea', label: 'سبب الانسحاب', max: 3000 },
     { key: 'notes', type: 'textarea', label: 'ملاحظات إضافية', optional: true, max: 3000 },
   ] },
@@ -564,7 +589,7 @@ function api(fn, arg) {
       do { id = ID_PREFIX + [0, 1, 2].map(() => C[Math.floor(Math.random() * C.length)]).join(''); } while (mockDb[id]);
       const f = FORMS.find(x => x.id === arg.form);
       const date = new Date().toLocaleString('ar-SA');
-      mockDb[id] = { id, form: f.label, date, dept: arg.data.dept,
+      mockDb[id] = { id, form: f.label, date, dept: state.me ? state.me.dept : '',
         title: arg.data.title || (arg.data.toDept ? 'نقل إلى ' + arg.data.toDept : f.label),
         status: 'قيد المراجعة', reply: 'تم استلام طلبك وجاري مراجعته (رد تجريبي).', updated: date };
       return res({ id });
@@ -592,7 +617,7 @@ function svg(name) {
 }
 
 let CFG = { evalOpen: false, evalMonth: '', sections: [] };
-const state = { form: null, vals: {}, step: 1, page: 0 };
+const state = { me: null, form: null, vals: {}, step: 0, page: 0 }; // me: { sid, name, dept } بعد الدخول
 
 function goStep(n) {
   state.step = n;
@@ -602,9 +627,44 @@ function goStep(n) {
     d.classList.toggle('done', s < n);
     d.classList.toggle('now', s === n);
   });
-  $('#stepper').classList.toggle('hidden', n === 3);
+  $('#stepper').classList.toggle('hidden', n === 3 || n === 0);
+  $('#whoami').classList.toggle('hidden', n === 0);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// ─── الدخول بالرقم الجامعي (أول واجهة، وكل النماذج بعده) ───
+$('#login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const i = $('#login-sid'), a = $('#login-alert'), w = i.closest('.field'), btn = $('#login-btn');
+  const fail = msg => { w.classList.add('err'); a.textContent = msg; a.classList.add('show'); };
+  w.classList.remove('err');
+  a.classList.remove('show');
+  const sid = i.value.trim();
+  if (!/^[0-9٠-٩]{7}$/.test(sid)) return fail('الرقم الجامعي لازم يكون 7 أرقام.');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>';
+  try {
+    const me = await api('lookupMember', sid);
+    state.me = { sid, name: me.name, dept: me.dept };
+    $('#who-name').textContent = me.name;
+    $('#who-dept').textContent = me.dept;
+    state.form = null;
+    renderFormGrid();
+    goStep(1);
+  } catch (err) {
+    fail((err && err.message) || 'تعذّر التحقق من الرقم الجامعي.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'دخول';
+  }
+});
+$('#login-sid').addEventListener('input', () => { $('#login-sid').closest('.field').classList.remove('err'); $('#login-alert').classList.remove('show'); });
+$('#logout').addEventListener('click', () => {
+  state.me = null; state.form = null; state.vals = {};
+  $('#login-sid').value = '';
+  goStep(0);
+  $('#login-sid').focus();
+});
 
 // ─── الخطوة 1: نوع النموذج ───
 function renderFormGrid() {
@@ -629,7 +689,7 @@ function renderFormGrid() {
 
 function pickForm(f) {
   state.form = f;
-  state.vals = { priority: 'متوسطة' };
+  state.vals = { priority: 'متوسطة', dept: state.me.dept }; // dept: عشان "القسم المطلوب" في النقل ما يكون قسمه
   state.page = 0;
   $$('#form-grid .opt').forEach(o => o.classList.toggle('sel', o.dataset.id === f.id));
   setTimeout(() => { if (f.isLog) loadLogData(); buildForm(); goStep(2); }, 220); // صفحة الرقم الجامعي ما تحتاج البيانات، فتفتح على طول
@@ -641,6 +701,7 @@ function buildForm() {
   const box = $('#form-fields');
   box.innerHTML = '';
   $('#chip-form').textContent = f.label;
+  if (f.note) box.appendChild(el('p', 'note', f.note));
   if (f.isEval) buildEval(box);
   else if (f.isLog) buildLog(box);
   else f.fields.forEach(fd => box.appendChild(renderField(fd)));
@@ -651,7 +712,7 @@ function buildForm() {
 
 // ─── التقييم الشهري: خطوات (البيانات، ثم قسم لكل خطوة) ───
 function buildEval(box) {
-  const pages = 1 + CFG.sections.length;
+  const pages = CFG.sections.length;
   const head = el('div', 'ev-head');
   head.appendChild(el('div', 'month-banner', 'تقييم شهر ' + CFG.evalMonth));
   head.appendChild(el('div', 'ev-count'));
@@ -659,11 +720,6 @@ function buildEval(box) {
   const bar = el('div', 'evbar');
   for (let i = 0; i < pages; i++) bar.appendChild(el('i'));
   box.appendChild(bar);
-
-  const first = el('div', 'evpage');
-  first.appendChild(el('h3', null, 'البيانات'));
-  state.form.fields.forEach(fd => first.appendChild(renderField(fd)));
-  box.appendChild(first);
 
   CFG.sections.forEach(sec => {
     const p = el('div', 'evpage');
@@ -764,12 +820,7 @@ function updateNav() {
 /** يتحقق من صفحة وحدة من التقييم، ويرجع العناصر الناقصة */
 function checkEvalPage(i) {
   const bad = [];
-  if (i === 0) {
-    if (!state.vals.dept) bad.push($('.field[data-f="dept"]'));
-    if (!state.vals.anon && !$('#f-name').value.trim()) bad.push($('.field[data-f="name"]'));
-    return bad;
-  }
-  CFG.sections[i - 1].items.forEach(it => {
+  CFG.sections[i].items.forEach(it => {
     if (it.optional || !isVisible(it) || it.type === 'text') return;
     if (state.vals[it.key] == null || state.vals[it.key] === '') bad.push($('#form-fields [data-key="' + it.key + '"]'));
   });
@@ -819,29 +870,10 @@ function segField(key, options) {
 function renderField(fd) {
   const w = el('div', 'field');
   w.dataset.f = fd.key || fd.type;
-  const f = state.form;
 
   if (fd.type === 'dept' || fd.type === 'priority') {
     w.appendChild(labelFor(fd));
     w.appendChild(segField(fd.key, fd.type === 'dept' ? DEPARTMENTS : PRIORITIES));
-  } else if (fd.type === 'name') {
-    w.appendChild(labelFor(fd, 'f-name'));
-    const i = el('input');
-    i.id = 'f-name'; i.autocomplete = 'name'; i.maxLength = 80;
-    i.value = store.get('name', '');
-    w.appendChild(i);
-    if (f.anon) {
-      const lab = el('label', 'anon');
-      const cb = el('input');
-      cb.type = 'checkbox'; cb.id = 'f-anon';
-      cb.addEventListener('change', () => {
-        state.vals.anon = cb.checked;
-        i.disabled = cb.checked;
-        w.classList.remove('err');
-      });
-      lab.append(cb, document.createTextNode('إرسال بدون اسم'));
-      w.appendChild(lab);
-    }
   } else {
     const id = 'f-' + fd.key;
     w.appendChild(labelFor(fd, id));
@@ -899,8 +931,6 @@ $('#req-form').addEventListener('submit', async e => {
     bad = checkEvalPage(state.page);
     if (!bad.length && !isLastPage()) { showPage(state.page + 1); return; }
     if (!bad.length) {
-      data.dept = v.dept;
-      if (v.anon) { data.anon = true; data.name = ''; } else data.name = $('#f-name').value.trim();
       evalItems().forEach(it => {
         if (!isVisible(it)) return;
         data[it.key] = it.type === 'text' ? $('#f-' + it.key).value.trim() : (v[it.key] == null ? '' : v[it.key]);
@@ -912,7 +942,6 @@ $('#req-form').addEventListener('submit', async e => {
       if (!data[fd.key] && !fd.optional) bad.push($('.field[data-f="' + fd.key + '"]'));
       return;
     }
-    if (fd.type === 'name' && f.anon && v.anon) { data.anon = true; data.name = ''; return; }
     const input = $('#f-' + fd.key);
     let val = input.value.trim();
     if (fd.type === 'link' && val && !/^https?:\/\//i.test(val)) val = 'https://' + val; // لو نسي https
@@ -928,12 +957,12 @@ $('#req-form').addEventListener('submit', async e => {
     return;
   }
 
+  data.sid = state.me.sid;
   const btn = $('#submit-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span> جاري الإرسال…';
   try {
     const res = await api('submitForm', { form: f.id, data });
-    if (data.name) store.set('name', data.name);
     if (res.id) {
       const recent = store.get('recent', []).filter(x => x !== res.id);
       recent.unshift(res.id);
@@ -987,7 +1016,7 @@ $('#track-this').addEventListener('click', () => {
   track();
 });
 
-// ═══════════════ تسجيل مهمة أو مشاركة (خطوات: الرقم الجامعي ← النوع ← البيانات ← الزملاء) ═══════════════
+// ═══════════════ تسجيل مهمة أو مشاركة (خطوات: النوع ← البيانات ← الزملاء) ═══════════════
 const LOG_KINDS = [
   { id: 'task_solo', label: 'مهمة فردية', hint: 'تنظيم، تقديم، تطوع، تصميم…' },
   { id: 'task_team', label: 'مهمة جماعية', hint: 'مهمة مع زملاء' },
@@ -1037,7 +1066,10 @@ function logInput(key, label, opts) {
   i.maxLength = opts.max || 150;
   if (opts.type) i.type = opts.type;
   if (opts.type === 'url') i.dir = 'ltr';
-  if (opts.type === 'date') { i.max = dayStr(0); i.min = dayStr(-(LOGDATA.maxAgeDays || 30)); }
+  if (opts.type === 'date') { // افتراضيًا: خلال آخر 30 يوم وما يكون بالمستقبل ('' = بدون حد)
+    i.max = opts.max !== undefined ? opts.max : dayStr(0);
+    i.min = opts.min !== undefined ? opts.min : dayStr(-(LOGDATA.maxAgeDays || 30));
+  }
   if (opts.placeholder) i.placeholder = opts.placeholder;
   if (opts.type === 'date') {
     const box = el('div', 'date-box blank');
@@ -1073,7 +1105,7 @@ function logEventField(optional) {
   s.id = 'l-event';
   const add = (v, t) => { const o = el('option', null, t); o.value = v; s.appendChild(o); };
   add(optional ? EVENT_NONE : '', optional ? 'لا' : 'اختر الفعالية');
-  LOGDATA.events.forEach(ev => add(ev.title, ev.title + (ev.date ? ' — ' + ev.date : '')));
+  LOGDATA.events.forEach(ev => add(ev.title, ev.title));
   add(EVENT_OTHER, 'فعالية غير موجودة في القائمة ✏️');
   w.appendChild(s);
   const other = el('input', 'other-input hidden');
@@ -1084,7 +1116,10 @@ function logEventField(optional) {
   w.appendChild(other);
   s.addEventListener('change', () => {
     other.classList.toggle('hidden', s.value !== EVENT_OTHER);
-    if (!optional) $('#log-date-wrap').classList.toggle('hidden', s.value !== EVENT_OTHER); // تاريخ الفعالية من القائمة لحاله
+    // المشاركة من القائمة: "من" يتعبى بتاريخ الفعالية من شيت الشهادات (ويقدر يغيّره)
+    const ev = !optional && LOGDATA.events.find(x => x.title === s.value);
+    const d = ev ? String(ev.date || '').replace(/\//g, '-') : '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) setDate('start', d);
   });
   if (LOGDATA.eventsError) w.appendChild(el('div', 'sub', 'تعذّر جلب قائمة الفعاليات، تقدر تكتب اسمها بنفسك.'));
   return w;
@@ -1105,6 +1140,50 @@ function logOutputField(label) {
   return w;
 }
 
+function setDate(key, v) {
+  const i = $('#l-' + key);
+  if (!i) return;
+  i.value = v;
+  i.dispatchEvent(new Event('change', { bubbles: true }));
+}
+// المشاركات: من / إلى، و"إلى" تمشي مع "من" لين يغيّرها (للي على أكثر من يوم)
+function logRange() {
+  const r = el('div', 'row2');
+  const a = logInput('start', 'من', { type: 'date', min: '' });
+  const b = logInput('date', 'إلى', { type: 'date' });
+  r.append(a, b);
+  const si = a.querySelector('input'), ei = b.querySelector('input');
+  let prev = '';
+  const follow = () => {
+    if (si.value === prev) return;
+    if (!ei.value || ei.value === prev) { ei.value = si.value; ei.dispatchEvent(new Event('change', { bubbles: true })); }
+    prev = si.value;
+    const lo = dayStr(-(LOGDATA.maxAgeDays || 30));
+    ei.min = si.value > lo ? si.value : lo;
+  };
+  si.addEventListener('input', follow);
+  si.addEventListener('change', follow);
+  return r;
+}
+// المهام: التسليم المطلوب والفعلي، وتاريخ الانتهاء بس لو المهمة استمرت بعد التسليم (زي ورشة على يومين)
+function logTaskDates(p) {
+  const r = el('div', 'row2');
+  r.append(logInput('due', 'التسليم المطلوب', { type: 'date', min: '', max: '' }),
+    logInput('delivered', 'التسليم الفعلي', { type: 'date', min: '' }));
+  p.appendChild(r);
+  const cl = el('label', 'check-line');
+  const cb = el('input');
+  cb.type = 'checkbox';
+  cb.id = 'l-longer';
+  cl.append(cb, document.createTextNode('المهمة استمرت بعد التسليم'));
+  p.appendChild(cl);
+  const ew = logInput('date', 'تاريخ الانتهاء', { type: 'date' });
+  ew.id = 'log-end-wrap';
+  ew.classList.add('hidden');
+  p.appendChild(ew);
+  cb.addEventListener('change', () => { ew.classList.toggle('hidden', !cb.checked); ew.classList.remove('err'); });
+}
+
 function buildLog(box) {
   const head = el('div', 'ev-head');
   head.appendChild(el('div', 'month-banner', 'يُسجَّل بعد انتهاء العمل أو المشاركة'));
@@ -1112,28 +1191,10 @@ function buildLog(box) {
   box.appendChild(head);
   box.appendChild(el('div', 'evbar'));
 
-  // 1) الرقم الجامعي
-  const p1 = el('div', 'evpage');
-  p1.dataset.page = 'sid';
-  p1.appendChild(el('h3', null, 'الرقم الجامعي'));
-  const w = logField('sid', 'الرقم الجامعي');
-  const i = el('input');
-  i.id = 'l-sid'; i.inputMode = 'numeric'; i.maxLength = 10; i.dir = 'ltr'; i.autocomplete = 'off'; i.placeholder = '2210345';
-  w.appendChild(i);
-  const who = el('div', 'who hidden');
-  who.id = 'log-who';
-  w.appendChild(who);
-  i.addEventListener('input', () => { state.vals.me = null; who.classList.add('hidden'); });
-  p1.appendChild(w);
-  box.appendChild(p1);
-
-  // 2) النوع
+  // 1) النوع
   const p2 = el('div', 'evpage');
   p2.dataset.page = 'kind';
   p2.appendChild(el('h3', null, 'وش تبغى تسجّل؟'));
-  const hello = el('div', 'hello');
-  hello.id = 'log-hello';
-  p2.appendChild(hello);
   const grid = el('div', 'grid log-kinds');
   LOG_KINDS.forEach(k => {
     const b = el('button', 'opt');
@@ -1145,8 +1206,13 @@ function buildLog(box) {
       state.vals.kind = k.id;
       $$('.log-kinds .opt').forEach(o => o.classList.toggle('sel', o === b));
       p2.classList.remove('err');
-      buildLogDetails();
-      setTimeout(() => { hideAlert(); showPage(2); }, 200);
+      // قائمة الأعضاء والفعاليات تنجاب من أول ما يفتح الموقع، فغالبًا جاهزة
+      Promise.all([loadLogData(), new Promise(r => setTimeout(r, 200))]).then(() => {
+        if (state.vals.kind !== k.id || !state.form || !state.form.isLog) return;
+        buildLogDetails();
+        hideAlert();
+        showPage(1);
+      });
     });
     grid.appendChild(b);
   });
@@ -1160,14 +1226,14 @@ function buildLog(box) {
 function buildLogDetails() {
   $$('#form-fields .evpage[data-page="details"], #form-fields .evpage[data-page="team"]').forEach(p => p.remove());
   ['size', 'forDept', 'activity', 'result'].forEach(k => delete state.vals[k]);
-  const k = state.vals.kind, box = $('#form-fields'), me = state.vals.me;
+  const k = state.vals.kind, box = $('#form-fields'), me = state.me;
   const p = el('div', 'evpage');
   p.dataset.page = 'details';
   p.appendChild(el('h3', null, LOG_KINDS.find(x => x.id === k).label));
   if (k === 'task_solo' || k === 'task_team') {
     p.appendChild(logInput('title', 'عنوان المهمة'));
     p.appendChild(logInput('details', 'التفاصيل', { area: true, max: 3000, placeholder: 'وش سويت بالضبط؟' }));
-    p.appendChild(logInput('date', 'التاريخ', { type: 'date' }));
+    logTaskDates(p);
     p.appendChild(logSeg('size', 'حجم المهمة', TASK_SIZES));
     p.appendChild(logSeg('forDept', 'لصالح أي قسم؟', LOGDATA.reviewDepts));
     p.appendChild(logEventField(true));
@@ -1175,16 +1241,14 @@ function buildLogDetails() {
     if (me && LOGDATA.reviewDepts.includes(me.dept)) state.vals.forDept = me.dept; // الافتراضي قسمه
   } else if (k === 'internal') {
     p.appendChild(logEventField(false));
-    const dw = logInput('date', 'تاريخ الفعالية', { type: 'date' });
-    dw.id = 'log-date-wrap';
-    dw.classList.add('hidden');
-    p.appendChild(dw);
+    p.appendChild(logRange());
     p.appendChild(logInput('details', 'ملاحظات', { area: true, max: 3000, optional: true }));
+    p.appendChild(logOutputField('المخرج'));
   } else {
     p.appendChild(logSeg('activity', 'نوع النشاط', EXTERNAL_ACTIVITIES));
     p.appendChild(logInput('title', 'اسم الفعالية'));
     p.appendChild(logInput('organizer', 'الجهة المنظمة'));
-    p.appendChild(logInput('date', 'التاريخ', { type: 'date' }));
+    p.appendChild(logRange());
     p.appendChild(logSeg('result', 'النتيجة', EXTERNAL_RESULTS));
     p.appendChild(logInput('details', 'ملاحظات', { area: true, max: 3000, optional: true }));
     p.appendChild(logOutputField('إثبات'));
@@ -1252,41 +1316,39 @@ async function checkLogPage(i) {
   const name = page.dataset.page, bad = [];
   const val = id => { const x = $('#l-' + id); return x ? x.value.trim() : ''; };
   const need = (key, ok) => { if (!ok) bad.push($('#form-fields .field[data-f="' + key + '"]')); };
-  if (name === 'sid') {
-    if (state.vals.me) return bad;
-    const sid = val('sid');
-    if (!/^[0-9٠-٩]{7}$/.test(sid)) { need('sid', false); showAlert('الرقم الجامعي لازم يكون 7 أرقام.'); return bad; }
-    try {
-      const [me] = await Promise.all([api('lookupMember', sid), loadLogData()]); // الصفحات الجاية تحتاج البيانات
-      state.vals.me = me;
-      const who = $('#log-who');
-      who.textContent = 'أهلًا ' + me.name + ' · ' + me.dept;
-      who.classList.remove('hidden');
-      $('#log-hello').textContent = 'أهلًا ' + me.name + ' · ' + me.dept;
-    } catch (err) {
-      need('sid', false);
-      showAlert((err && err.message) || 'تعذّر التحقق من الرقم الجامعي.');
-    }
-    return bad;
-  }
   if (name === 'kind') { if (!state.vals.kind) bad.push(page); return bad; }
   if (name === 'details') {
-    const k = state.vals.kind;
+    const k = state.vals.kind, today = dayStr(0), maxAge = LOGDATA.maxAgeDays || 30;
+    const inWindow = d => d <= today && d >= dayStr(-maxAge);
+    let dateMsg = '';
     if (k === 'task_solo' || k === 'task_team') {
-      need('title', val('title')); need('details', val('details')); need('date', val('date'));
+      need('title', val('title')); need('details', val('details'));
       need('size', state.vals.size); need('forDept', state.vals.forDept);
       if ($('#l-event').value === EVENT_OTHER) need('event', val('eventOther'));
-    } else if (k === 'internal') {
-      const ev = $('#l-event').value;
-      need('event', ev && (ev !== EVENT_OTHER || val('eventOther')));
-      if (ev === EVENT_OTHER) need('date', val('date'));
+      // التسليم الفعلي (أو تاريخ الانتهاء لو استمرت) لازم خلال آخر 30 يوم
+      const due = val('due'), got = val('delivered'), longer = $('#l-longer').checked, end = longer ? val('date') : got;
+      need('due', due);
+      need('delivered', got && got <= today);
+      if (longer) need('date', val('date'));
+      if (got && got > today) dateMsg = 'التسليم الفعلي ما يكون بالمستقبل.';
+      else if (longer && end && got && end < got) { need('date', false); dateMsg = 'تاريخ الانتهاء ما يكون قبل التسليم الفعلي.'; }
+      else if (end && !inWindow(end)) { need(longer ? 'date' : 'delivered', false); dateMsg = 'التسجيل متاح خلال ' + maxAge + ' يوم من آخر يوم في المهمة، وما يكون بالمستقبل.'; }
     } else {
-      need('activity', state.vals.activity && (state.vals.activity !== 'أخرى' || val('activityOther')));
-      need('title', val('title')); need('organizer', val('organizer')); need('date', val('date'));
-      need('result', state.vals.result && (state.vals.result !== 'أخرى' || val('resultOther')));
+      if (k === 'internal') {
+        const ev = $('#l-event').value;
+        need('event', ev && (ev !== EVENT_OTHER || val('eventOther')));
+      } else {
+        need('activity', state.vals.activity && (state.vals.activity !== 'أخرى' || val('activityOther')));
+        need('title', val('title')); need('organizer', val('organizer'));
+        need('result', state.vals.result && (state.vals.result !== 'أخرى' || val('resultOther')));
+      }
+      const from = val('start'), to = val('date');
+      need('start', from && from <= today);
+      need('date', to);
+      if (from && to && to < from) { need('date', false); dateMsg = 'تاريخ النهاية ما يكون قبل تاريخ البداية.'; }
+      else if (to && !inWindow(to)) { need('date', false); dateMsg = 'التسجيل متاح خلال ' + maxAge + ' يوم من آخر يوم في المشاركة، وما يكون بالمستقبل.'; }
+      else if (from && from > today) dateMsg = 'التاريخ ما يكون بالمستقبل.';
     }
-    const d = val('date');
-    if (d && (d > dayStr(0) || d < dayStr(-(LOGDATA.maxAgeDays || 30)))) need('date', false);
     const f = $('#l-file');
     if (f && f.files[0] && f.files[0].size > (LOGDATA.maxFileMb || 10) * 1024 * 1024) {
       need('output', false);
@@ -1295,9 +1357,7 @@ async function checkLogPage(i) {
     }
     const link = val('link');
     if (link && !/^(https?:\/\/)?[^\s.]+\.\S+$/i.test(link)) need('output', false);
-    if (bad.length && d && (d > dayStr(0) || d < dayStr(-(LOGDATA.maxAgeDays || 30)))) {
-      showAlert('التاريخ لازم يكون خلال آخر ' + (LOGDATA.maxAgeDays || 30) + ' يوم، وما يكون بالمستقبل.');
-    }
+    if (bad.length && dateMsg) showAlert(dateMsg);
     return bad;
   }
   if (name === 'team') {
@@ -1338,10 +1398,14 @@ async function logSubmit() {
 
   const val = id => { const x = $('#l-' + id); return x ? x.value.trim() : ''; };
   const k = state.vals.kind;
-  const data = { sid: val('sid'), kind: k, details: val('details'), date: val('date') };
+  const data = { sid: state.me.sid, kind: k, details: val('details') };
   if (k === 'task_solo' || k === 'task_team') {
-    Object.assign(data, { title: val('title'), size: state.vals.size, forDept: state.vals.forDept });
-  } else if (k === 'external') {
+    Object.assign(data, { title: val('title'), size: state.vals.size, forDept: state.vals.forDept,
+      due: val('due'), delivered: val('delivered'), date: $('#l-longer').checked ? val('date') : '' });
+  } else {
+    Object.assign(data, { start: val('start'), date: val('date') });
+  }
+  if (k === 'external') {
     Object.assign(data, { title: val('title'), organizer: val('organizer'), activity: state.vals.activity,
       activityOther: val('activityOther'), result: state.vals.result, resultOther: val('resultOther') });
   }
@@ -1504,7 +1568,7 @@ function renderResult(r) {
 // ─── تهيئة ───
 if (!IS_LIVE) $('#preview-badge').style.display = 'block';
 renderFormGrid();
-goStep(1);
+goStep(0);
 api('getConfig').then(c => { CFG = c; renderFormGrid(); }).catch(() => {});
 </script>
 </body>
