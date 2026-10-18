@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نماذج الأعضاء | نادي الذكاء الاصطناعي</title>
+<title>بوابة الأعضاء | نادي الذكاء الاصطناعي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,6 +343,12 @@
   .check-line input { width: 18px; height: 18px; margin: 0; accent-color: var(--green); cursor: pointer; }
   .row2 > .field { min-width: 0; }
   .note { color: var(--muted); font-size: 13px; margin: -6px 0 16px; }
+  /* معايير الاقتراح وخطوات الملاحظة (فوق النموذج) */
+  .guide { margin: 0 0 18px; padding: 12px 16px; border-radius: 14px; background: var(--purple-soft); border: 1px solid rgba(126,54,227,.35); font-size: 13.5px; }
+  .guide b { display: block; color: #d7bcff; font-size: 14px; margin-bottom: 6px; }
+  .guide ol, .guide ul { margin: 0; padding-right: 20px; line-height: 1.8; }
+  .guide li strong { color: var(--text); font-weight: 600; }
+  .guide li { color: #cfcfda; }
   .members-status div { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); }
 </style>
 </head>
@@ -361,7 +367,7 @@
   </header>
 
   <section class="hero">
-    <h1>بوابة <em>نماذج الأعضاء</em></h1>
+    <h1>بوابة <em>الأعضاء</em></h1>
     <p>تسجيل المهام والمشاركات، والاقتراحات، والملاحظات، والتقييم الشهري، وطلبات النقل والانسحاب.</p>
   </section>
 
@@ -450,12 +456,20 @@ const FORMS = [
   // تسجيل المهام والمشاركات: له خطوات خاصة (buildLog)، والتحقق كله في Code.gs (submitLog)
   { id: 'log', label: 'تسجيل مهمة أو مشاركة', isLog: true, fields: [] },
   // الاسم والقسم والإيميل تنضاف تلقائيًا من الرقم الجامعي (Code.gs)
-  { id: 'idea', label: 'اقتراحات وأفكار', fields: [
+  { id: 'idea', label: 'اقتراحات وأفكار', guide: { title: 'معايير قبول الاقتراح', items: [
+    ['واضح:', 'الفكرة واضحة ومحددة.'],
+    ['مفيد:', 'يحل مشكلة أو يضيف فايدة للنادي أو الأعضاء.'],
+    ['قابل للتنفيذ:', 'ممكن يتنفذ بإمكانيات النادي، مع توضيح كيف تقريبًا.'],
+  ] }, fields: [
     { key: 'title', type: 'text', label: 'عنوان الاقتراح', max: 150 },
     { key: 'details', type: 'textarea', label: 'الوصف', max: 3000 },
     { key: 'link', type: 'link', label: 'رابط مرفق', optional: true },
   ] },
-  { id: 'issue', label: 'ملاحظات ومشاكل', note: 'ما يوصل اسمك للقادة.', fields: [
+  { id: 'issue', label: 'ملاحظات ومشاكل', note: 'ما يوصل اسمك للقادة.', guide: { title: 'اكتب ملاحظتك كذا', steps: true, items: [
+    ['وش صار؟', 'وصف واضح للملاحظة أو المشكلة.'],
+    ['متى ووين؟', 'متى لاحظتها، وفي أي فعالية أو قسم أو موقف.'],
+    ['وش تأثيرها؟', 'على مين أثرت، أو وش ممكن يصير لو استمرت.'],
+  ] }, fields: [
     { key: 'title', type: 'text', label: 'الموضوع', max: 150 },
     { key: 'details', type: 'textarea', label: 'التفاصيل', max: 3000 },
     { key: 'priority', type: 'priority', label: 'الأولوية' },
@@ -702,6 +716,18 @@ function buildForm() {
   box.innerHTML = '';
   $('#chip-form').textContent = f.label;
   if (f.note) box.appendChild(el('p', 'note', f.note));
+  if (f.guide) {
+    const g = el('div', 'guide');
+    g.appendChild(el('b', null, f.guide.title));
+    const list = el(f.guide.steps ? 'ol' : 'ul');
+    f.guide.items.forEach(([head, text]) => {
+      const li = el('li');
+      li.append(el('strong', null, head), document.createTextNode(' ' + text));
+      list.appendChild(li);
+    });
+    g.appendChild(list);
+    box.appendChild(g);
+  }
   if (f.isEval) buildEval(box);
   else if (f.isLog) buildLog(box);
   else f.fields.forEach(fd => box.appendChild(renderField(fd)));
@@ -1259,7 +1285,7 @@ function buildLogDetails() {
     const t = el('div', 'evpage');
     t.dataset.page = 'team';
     t.appendChild(el('h3', null, 'الزملاء'));
-    t.appendChild(el('p', 'sub', 'اختر الأعضاء اللي اشتغلوا معك. كل واحد ينراجع لحاله.'));
+    t.appendChild(el('p', 'sub', 'اختر الأعضاء اللي اشتغلوا معك، وكل واحد له مراجعة لحاله.'));
     const list = el('div');
     list.id = 'team-list';
     t.appendChild(list);
