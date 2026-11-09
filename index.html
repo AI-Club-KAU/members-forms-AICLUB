@@ -1166,9 +1166,12 @@ function logOutputField(label) {
   f.id = 'l-file';
   f.className = 'file-input';
   w.appendChild(f);
-  const info = el('div', 'sub', 'ملف حتى ' + (LOGDATA.maxFileMb || 10) + ' ميغا، أو رابط (درايف، فيقما، قيت هب…)');
+  const info = el('div', 'sub', 'ارفع ملف حتى ' + (LOGDATA.maxFileMb || 10) + ' ميغا (ملفات قوقل نزّلها وارفعها كملف)، والرابط لفيقما وقيت هب والمواقع وغيرها.');
   info.style.margin = '6px 0';
   w.appendChild(info);
+  const share = el('div', 'sub', 'لو حطيت رابط، خلّ مشاركته: أي شخص لديه الرابط.');
+  share.style.margin = '0 0 6px';
+  w.appendChild(share);
   const l = el('input');
   l.type = 'url'; l.dir = 'ltr'; l.id = 'l-link'; l.maxLength = 500; l.placeholder = 'https://';
   w.appendChild(l);
