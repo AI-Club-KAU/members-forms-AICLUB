@@ -515,6 +515,9 @@ const STATUS_STYLE = {
   'مؤكد تلقائيًا': ['#9fd0ff', 'rgba(80,160,255,.15)'],
   'مرفوض': ['#ffb3b3', 'rgba(255,107,107,.15)'],
 };
+// اسم الحالة اللي يشوفه العضو. في الشيت تظل "مؤكد من الشهادات" لأن عضو الشهر وملف الإنجاز وبوابة القادة يدوّرون عليها بالنص
+const STATUS_LABEL = { 'مؤكد من الشهادات': 'مؤكد من سجل الفعاليات' };
+const statusText = s => STATUS_LABEL[s] || s;
 
 // ─── الربط مع Apps Script (أو معاينة محلية لو فتحت الملف مباشرة) ───
 // رابط السكربت (/exec) — تحطه هنا لما ترفع الواجهة برا قوقل (GitHub Pages).
@@ -592,7 +595,8 @@ function api(fn, arg) {
     if (fn === 'lookupMember') return res({ name: 'نورة أحمد الغامدي', dept: 'الإعلام والتسويق' });
     if (fn === 'getLogData') return res({ members: [{ name: 'نورة أحمد الغامدي', dept: 'الإعلام والتسويق' },
       { name: 'جود فهد القحطاني', dept: 'التقني' }, { name: 'ريم خالد العتيبي', dept: 'الهاكاثونات' }],
-      events: [{ title: 'Introduction To AI', type: 'ورشة', date: '2026/10/08' }], eventsError: false,
+      events: [{ title: 'Introduction To AI', type: 'ورشة', date: '2026/10/08', scope: 'internal' },
+        { title: 'بوث معرض الرياض', type: 'بوث', date: '2026/11/01', scope: 'external' }], eventsError: false,
       reviewDepts: DEPARTMENTS.concat(['قادة المشاريع']), maxAgeDays: 30, maxFileMb: 10 });
     if (fn === 'submitLog') {
       const id = ID_PREFIX + 'LG' + Math.floor(Math.random() * 9 + 1);
@@ -1134,13 +1138,14 @@ function logSeg(key, label, options) {
   return w;
 }
 // قائمة الفعاليات: من القائمة، أو "غير موجودة" ويكتبها، أو (للمهام) بدون
-function logEventField(optional) {
+// scope: 'internal' أو 'external' = يطلع بس فعاليات هالتصنيف (المهام تشوف الكل)
+function logEventField(optional, scope) {
   const w = logField('event', optional ? 'مرتبطة بفعالية؟' : 'الفعالية', optional);
   const s = el('select');
   s.id = 'l-event';
   const add = (v, t) => { const o = el('option', null, t); o.value = v; s.appendChild(o); };
   add(optional ? EVENT_NONE : '', optional ? 'لا' : 'اختر الفعالية');
-  LOGDATA.events.forEach(ev => add(ev.title, ev.title));
+  LOGDATA.events.filter(ev => !scope || (ev.scope || 'internal') === scope).forEach(ev => add(ev.title, ev.title));
   add(EVENT_OTHER, 'فعالية غير موجودة في القائمة ✏️');
   w.appendChild(s);
   const other = el('input', 'other-input hidden');
@@ -1278,13 +1283,13 @@ function buildLogDetails() {
     p.appendChild(logOutputField('المخرج'));
     if (me && LOGDATA.reviewDepts.includes(me.dept)) state.vals.forDept = me.dept; // الافتراضي قسمه
   } else if (k === 'internal') {
-    p.appendChild(logEventField(false));
+    p.appendChild(logEventField(false, 'internal'));
     p.appendChild(logRange());
     p.appendChild(logInput('details', 'ملاحظات', { area: true, max: 3000, optional: true }));
     p.appendChild(logOutputField('المخرج'));
   } else {
     p.appendChild(logSeg('activity', 'نوع النشاط', EXTERNAL_ACTIVITIES));
-    p.appendChild(logInput('title', 'اسم الفعالية'));
+    p.appendChild(logEventField(false, 'external'));
     p.appendChild(logInput('organizer', 'الجهة المنظمة'));
     p.appendChild(logRange());
     p.appendChild(logSeg('result', 'النتيجة', EXTERNAL_RESULTS));
@@ -1372,12 +1377,11 @@ async function checkLogPage(i) {
       else if (longer && end && got && end < got) { need('date', false); dateMsg = 'تاريخ الانتهاء ما يكون قبل التسليم الفعلي.'; }
       else if (end && !inWindow(end)) { need(longer ? 'date' : 'delivered', false); dateMsg = 'التسجيل متاح خلال ' + maxAge + ' يوم من آخر يوم في المهمة، وما يكون بالمستقبل.'; }
     } else {
-      if (k === 'internal') {
-        const ev = $('#l-event').value;
-        need('event', ev && (ev !== EVENT_OTHER || val('eventOther')));
-      } else {
+      const ev = $('#l-event').value;
+      need('event', ev && (ev !== EVENT_OTHER || val('eventOther')));
+      if (k === 'external') {
         need('activity', state.vals.activity && (state.vals.activity !== 'أخرى' || val('activityOther')));
-        need('title', val('title')); need('organizer', val('organizer'));
+        need('organizer', val('organizer'));
         need('result', state.vals.result && (state.vals.result !== 'أخرى' || val('resultOther')));
       }
       const from = val('start'), to = val('date');
@@ -1444,7 +1448,7 @@ async function logSubmit() {
     Object.assign(data, { start: val('start'), date: val('date') });
   }
   if (k === 'external') {
-    Object.assign(data, { title: val('title'), organizer: val('organizer'), activity: state.vals.activity,
+    Object.assign(data, { organizer: val('organizer'), activity: state.vals.activity,
       activityOther: val('activityOther'), result: state.vals.result, resultOther: val('resultOther') });
   }
   const ev = $('#l-event');
@@ -1471,7 +1475,7 @@ async function logSubmit() {
     $('#track-this').classList.remove('hidden');
     $('#done-title').textContent = 'تم التسجيل';
     $('#done-sub').textContent = res.status === 'مؤكد من الشهادات'
-      ? 'تأكدت مشاركتك من سجل الحضور ✅ رقم التسجيل:' : 'بانتظار المراجعة. رقم التسجيل للمتابعة:';
+      ? 'تأكدت مشاركتك من سجلات الفعالية ✅ رقم التسجيل:' : 'بانتظار المراجعة. رقم التسجيل للمتابعة:';
     goStep(3);
   } catch (err) {
     showAlert((err && err.message) || 'صار خطأ أثناء الإرسال، حاول مرة ثانية.');
@@ -1555,7 +1559,7 @@ function renderResult(r) {
   left.appendChild(el('div', 'res-meta', r.id + ' · ' + r.form + ' · ' + r.dept));
   left.appendChild(el('div', 'res-meta', 'أُرسل: ' + r.date + (r.updated ? '  ·  آخر تحديث: ' + r.updated : '')));
   const st = STATUS_STYLE[r.status] || STATUS_STYLE['جديد'];
-  const badge = el('span', 'badge', r.status);
+  const badge = el('span', 'badge', statusText(r.status));
   badge.style.color = st[0]; badge.style.background = st[1];
   head.append(left, badge);
   box.appendChild(head);
@@ -1587,7 +1591,7 @@ function renderResult(r) {
       const row = el('div');
       row.appendChild(el('span', null, m.name));
       const st = STATUS_STYLE[m.status] || STATUS_STYLE['بانتظار المراجعة'];
-      const b = el('span', 'badge', m.status);
+      const b = el('span', 'badge', statusText(m.status));
       b.style.color = st[0]; b.style.background = st[1];
       row.appendChild(b);
       ms.appendChild(row);
