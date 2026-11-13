@@ -1278,10 +1278,8 @@ function buildLogDetails() {
     p.appendChild(logInput('details', 'التفاصيل', { area: true, max: 3000, placeholder: 'وش سويت بالضبط؟' }));
     logTaskDates(p);
     p.appendChild(logSeg('size', 'حجم المهمة', TASK_SIZES));
-    p.appendChild(logSeg('forDept', 'لصالح أي قسم؟', LOGDATA.reviewDepts));
     p.appendChild(logEventField(true));
     p.appendChild(logOutputField('المخرج'));
-    if (me && LOGDATA.reviewDepts.includes(me.dept)) state.vals.forDept = me.dept; // الافتراضي قسمه
   } else if (k === 'internal') {
     p.appendChild(logEventField(false, 'internal'));
     p.appendChild(logRange());
@@ -1366,7 +1364,7 @@ async function checkLogPage(i) {
     let dateMsg = '';
     if (k === 'task_solo' || k === 'task_team') {
       need('title', val('title')); need('details', val('details'));
-      need('size', state.vals.size); need('forDept', state.vals.forDept);
+      need('size', state.vals.size);
       if ($('#l-event').value === EVENT_OTHER) need('event', val('eventOther'));
       // التسليم الفعلي (أو تاريخ الانتهاء لو استمرت) لازم خلال آخر 30 يوم
       const due = val('due'), got = val('delivered'), longer = $('#l-longer').checked, end = longer ? val('date') : got;
@@ -1442,7 +1440,7 @@ async function logSubmit() {
   const k = state.vals.kind;
   const data = { sid: state.me.sid, kind: k, details: val('details') };
   if (k === 'task_solo' || k === 'task_team') {
-    Object.assign(data, { title: val('title'), size: state.vals.size, forDept: state.vals.forDept,
+    Object.assign(data, { title: val('title'), size: state.vals.size,
       due: val('due'), delivered: val('delivered'), date: $('#l-longer').checked ? val('date') : '' });
   } else {
     Object.assign(data, { start: val('start'), date: val('date') });
